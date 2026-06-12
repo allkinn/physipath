@@ -228,6 +228,12 @@ export default function ResultPage() {
           >
             Kembali ke Dashboard
           </Link>
+          <Link
+            href="/learn"
+            className="rounded-full bg-cyan-400 px-7 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+          >
+            Lihat Rekomendasi Materi
+          </Link>
 
           <Link
             href="/diagnostic"

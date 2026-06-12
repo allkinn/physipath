@@ -19,6 +19,12 @@ export default function DashboardPage() {
           >
             Mulai Tes Diagnostik
           </Link>
+          <Link
+            href="/learn"
+            className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
+          >
+            Lihat Rekomendasi Belajar
+          </Link>
         </div>
 
         <div className="mt-10 grid gap-5 md:grid-cols-3">
@@ -31,8 +37,8 @@ export default function DashboardPage() {
           <DashboardCard
             icon={<BookOpen />}
             title="Materi Direkomendasikan"
-            value="0 Modul"
-            description="Materi akan muncul setelah tes diagnostik."
+            value="5 Modul"
+            description="Modul dipilih berdasarkan hasil tes diagnostik terbaru."
           />
           <DashboardCard
             icon={<ChartNoAxesCombined />}
