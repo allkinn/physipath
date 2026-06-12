@@ -1,4 +1,6 @@
-import Link from "next/link";
+import DiagnosticForm, {
+  DiagnosticQuestion,
+} from "../../components/DiagnosticForm";
 import { supabase } from "../../lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +16,10 @@ type TopicRelation =
     }[]
   | null;
 
-type QuestionWithTopic = {
+type RawQuestion = {
   id: string;
   code: string;
+  topic_id: string;
   question_text: string;
   option_a: string;
   option_b: string;
@@ -42,6 +45,7 @@ export default async function DiagnosticPage() {
     .select(`
       id,
       code,
+      topic_id,
       question_text,
       option_a,
       option_b,
@@ -55,7 +59,20 @@ export default async function DiagnosticPage() {
     `)
     .order("code", { ascending: true });
 
-  const questions = (data ?? []) as QuestionWithTopic[];
+  const rawQuestions = (data ?? []) as RawQuestion[];
+
+  const questions: DiagnosticQuestion[] = rawQuestions.map((item) => ({
+    id: item.id,
+    code: item.code,
+    topic_id: item.topic_id,
+    topic_name: getTopicName(item.physics_topics),
+    question_text: item.question_text,
+    option_a: item.option_a,
+    option_b: item.option_b,
+    option_c: item.option_c,
+    option_d: item.option_d,
+    difficulty: item.difficulty,
+  }));
 
   if (error) {
     return (
@@ -88,84 +105,7 @@ export default async function DiagnosticPage() {
           </div>
         </div>
 
-        <div className="mt-8 space-y-6">
-          {questions.map((item, index) => (
-            <div
-              key={item.id}
-              className="rounded-3xl border border-slate-800 bg-slate-900 p-6"
-            >
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <span className="rounded-full bg-cyan-400/10 px-4 py-1 text-sm text-cyan-300">
-                  {getTopicName(item.physics_topics)}
-                </span>
-
-                <div className="flex items-center gap-3">
-                  <span className="rounded-full bg-slate-800 px-4 py-1 text-sm text-slate-300">
-                    {item.difficulty}
-                  </span>
-                  <span className="text-sm text-slate-400">
-                    Soal {index + 1}
-                  </span>
-                </div>
-              </div>
-
-              <h2 className="text-lg font-semibold leading-8">
-                {item.question_text}
-              </h2>
-
-              <div className="mt-5 grid gap-3">
-                <label className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 transition hover:border-cyan-400">
-                  <input
-                    type="radio"
-                    name={`question-${item.id}`}
-                    value="A"
-                    className="mr-3"
-                  />
-                  A. {item.option_a}
-                </label>
-
-                <label className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 transition hover:border-cyan-400">
-                  <input
-                    type="radio"
-                    name={`question-${item.id}`}
-                    value="B"
-                    className="mr-3"
-                  />
-                  B. {item.option_b}
-                </label>
-
-                <label className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 transition hover:border-cyan-400">
-                  <input
-                    type="radio"
-                    name={`question-${item.id}`}
-                    value="C"
-                    className="mr-3"
-                  />
-                  C. {item.option_c}
-                </label>
-
-                <label className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 transition hover:border-cyan-400">
-                  <input
-                    type="radio"
-                    name={`question-${item.id}`}
-                    value="D"
-                    className="mr-3"
-                  />
-                  D. {item.option_d}
-                </label>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 flex justify-end">
-          <Link
-            href="/result"
-            className="rounded-full bg-cyan-400 px-7 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
-          >
-            Submit Jawaban
-          </Link>
-        </div>
+        <DiagnosticForm questions={questions} />
       </section>
     </main>
   );
