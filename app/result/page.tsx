@@ -241,6 +241,12 @@ export default function ResultPage() {
           >
             Ulangi Tes
           </Link>
+          <Link
+            href="/practice"
+            className="rounded-full border border-slate-700 px-7 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
+          >
+            Latihan Adaptif
+          </Link>
         </div>
       </section>
     </main>

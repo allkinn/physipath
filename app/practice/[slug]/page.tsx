@@ -1,4 +1,7 @@
 import Link from "next/link";
+import PracticeForm, {
+  PracticeQuestion,
+} from "../../../components/PracticeForm";
 import { supabase } from "../../../lib/supabase";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +24,6 @@ type LearningModule = {
   target_level: string;
   difficulty_label: string;
   summary: string;
-  content: string;
   physics_topics: TopicRelation;
 };
 
@@ -45,14 +47,14 @@ function getTopic(topic: TopicRelation) {
   return topic;
 }
 
-export default async function ModuleDetailPage({
+export default async function PracticeDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
 
-  const { data, error } = await supabase
+  const { data: moduleData, error: moduleError } = await supabase
     .from("learning_modules")
     .select(`
       id,
@@ -61,7 +63,6 @@ export default async function ModuleDetailPage({
       target_level,
       difficulty_label,
       summary,
-      content,
       physics_topics (
         name,
         description
@@ -70,37 +71,64 @@ export default async function ModuleDetailPage({
     .eq("slug", slug)
     .single();
 
-  if (error || !data) {
+  if (moduleError || !moduleData) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
         <div className="max-w-lg rounded-3xl border border-red-400/30 bg-red-400/10 p-8">
-          <h1 className="text-2xl font-bold text-red-200">Modul tidak ditemukan</h1>
+          <h1 className="text-2xl font-bold text-red-200">Latihan tidak ditemukan</h1>
           <p className="mt-3 text-red-100">
-            {error?.message || "Data modul tidak tersedia."}
+            {moduleError?.message || "Data modul tidak tersedia."}
           </p>
 
           <Link
-            href="/learn"
+            href="/practice"
             className="mt-6 inline-block rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950"
           >
-            Kembali ke Learn
+            Kembali ke Practice
           </Link>
         </div>
       </main>
     );
   }
 
-  const module = data as LearningModule;
+  const module = moduleData as LearningModule;
   const topic = getTopic(module.physics_topics);
+
+  const { data: questionData, error: questionError } = await supabase
+    .from("practice_questions")
+    .select(`
+      id,
+      question_text,
+      option_a,
+      option_b,
+      option_c,
+      option_d,
+      order_index
+    `)
+    .eq("module_id", module.id)
+    .order("order_index", { ascending: true });
+
+  if (questionError) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
+        <div className="max-w-lg rounded-3xl border border-red-400/30 bg-red-400/10 p-8">
+          <h1 className="text-2xl font-bold text-red-200">Gagal mengambil soal</h1>
+          <p className="mt-3 text-red-100">{questionError.message}</p>
+        </div>
+      </main>
+    );
+  }
+
+  const questions = (questionData ?? []) as PracticeQuestion[];
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-white">
-      <article className="mx-auto max-w-4xl">
+      <section className="mx-auto max-w-4xl">
         <Link
-          href="/learn"
+          href="/practice"
           className="text-sm font-semibold text-cyan-300 hover:underline"
         >
-          ← Kembali ke Rekomendasi
+          ← Kembali ke Latihan
         </Link>
 
         <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-900 p-8">
@@ -116,43 +144,28 @@ export default async function ModuleDetailPage({
             </span>
           </div>
 
-          <h1 className="mt-6 text-4xl font-bold leading-tight">{module.title}</h1>
+          <h1 className="mt-6 text-3xl font-bold leading-tight">
+            Latihan: {module.title}
+          </h1>
 
-          <p className="mt-5 leading-8 text-slate-300">{module.summary}</p>
-        </div>
-
-        <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-900 p-8">
-          <h2 className="text-2xl font-bold">Materi Pembelajaran</h2>
-
-          <div className="mt-6 space-y-5 leading-8 text-slate-300">
-            {module.content.split("\n\n").map((paragraph, index) => (
-              <p key={index}>{paragraph.trim()}</p>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-6">
-          <h2 className="text-xl font-bold text-cyan-300">Latihan Adaptif</h2>
-          <p className="mt-3 leading-7 text-slate-300">
-            Setelah membaca modul ini, lanjutkan dengan latihan soal yang sesuai dengan
-            level pemahamanmu.
+          <p className="mt-5 leading-8 text-slate-300">
+            {module.summary}
           </p>
 
-          <Link
-            href={`/practice/${module.slug}`}
-            className="mt-5 inline-block rounded-full bg-cyan-400 px-7 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
-          >
-            Mulai Latihan Modul Ini
-          </Link>
-        </div>
-        <div className="mt-8 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-6">
-          <h2 className="text-xl font-bold text-cyan-300">Langkah Berikutnya</h2>
-          <p className="mt-3 leading-7 text-slate-300">
-            Setelah membaca modul ini, lanjutkan dengan latihan soal pada topik yang
-            sama. Fitur latihan adaptif akan dibuat pada tahap berikutnya.
+          <p className="mt-5 text-sm text-slate-400">
+            Jumlah soal latihan: {questions.length}
           </p>
         </div>
-      </article>
+
+        <PracticeForm
+          module={{
+            id: module.id,
+            title: module.title,
+            slug: module.slug,
+          }}
+          questions={questions}
+        />
+      </section>
     </main>
   );
 }
