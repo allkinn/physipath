@@ -493,6 +493,13 @@ export default function DashboardPage() {
               >
                 Ulangi Tes
               </Link>
+
+              <Link
+                href="/explore"
+                className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
+              >
+                Explore Challenge
+              </Link>
             </div>
           </div>
 
