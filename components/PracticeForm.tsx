@@ -38,6 +38,15 @@ type PracticeResult = {
   results: PracticeResultItem[];
 };
 
+type AiTutorState = Record<
+  string,
+  {
+    loading: boolean;
+    content: string;
+    error: string;
+  }
+>;
+
 export default function PracticeForm({
   module,
   questions,
@@ -49,6 +58,7 @@ export default function PracticeForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<PracticeResult | null>(null);
+  const [aiTutor, setAiTutor] = useState<AiTutorState>({});
 
   function handleSelect(questionId: string, answer: string) {
     if (result) return;
@@ -114,6 +124,70 @@ export default function PracticeForm({
     setLoading(false);
   }
 
+  async function askAiTutor(questionId: string) {
+    if (!result) return;
+
+    setAiTutor((prev) => ({
+      ...prev,
+      [questionId]: {
+        loading: true,
+        content: prev[questionId]?.content ?? "",
+        error: "",
+      },
+    }));
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      setAiTutor((prev) => ({
+        ...prev,
+        [questionId]: {
+          loading: false,
+          content: "",
+          error: "Lu harus login dulu untuk memakai AI Tutor.",
+        },
+      }));
+      return;
+    }
+
+    const response = await fetch("/api/ai/tutor-explanation", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        attemptId: result.attemptId,
+        questionId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setAiTutor((prev) => ({
+        ...prev,
+        [questionId]: {
+          loading: false,
+          content: "",
+          error: data.error || "Gagal mengambil penjelasan AI.",
+        },
+      }));
+      return;
+    }
+
+    setAiTutor((prev) => ({
+      ...prev,
+      [questionId]: {
+        loading: false,
+        content: data.content,
+        error: "",
+      },
+    }));
+  }
+
   function getResultForQuestion(questionId: string) {
     return result?.results.find((item) => item.questionId === questionId);
   }
@@ -162,6 +236,7 @@ export default function PracticeForm({
       <div className="mt-8 space-y-6">
         {questions.map((question, index) => {
           const itemResult = getResultForQuestion(question.id);
+          const tutorState = aiTutor[question.id];
 
           return (
             <div
@@ -239,6 +314,36 @@ export default function PracticeForm({
                   <p className="mt-2 leading-7 text-slate-300">
                     {itemResult.explanation}
                   </p>
+
+                  <button
+                    type="button"
+                    onClick={() => askAiTutor(question.id)}
+                    disabled={tutorState?.loading}
+                    className="mt-5 rounded-full bg-cyan-400 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {tutorState?.loading
+                      ? "AI sedang menjelaskan..."
+                      : tutorState?.content
+                        ? "Muat Ulang AI Tutor"
+                        : "Tanya AI Tutor"}
+                  </button>
+
+                  {tutorState?.error && (
+                    <div className="mt-4 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-sm text-red-200">
+                      {tutorState.error}
+                    </div>
+                  )}
+
+                  {tutorState?.content && (
+                    <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-5">
+                      <p className="text-sm font-semibold text-cyan-300">
+                        Penjelasan AI Tutor
+                      </p>
+                      <div className="mt-3 whitespace-pre-line leading-8 text-slate-300">
+                        {tutorState.content}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
