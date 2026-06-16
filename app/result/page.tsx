@@ -2,7 +2,7 @@
 
 import AiGapAnalysis from "../../components/AiGapAnalysis";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
@@ -66,7 +66,7 @@ function getRecommendation(level: string, topicName: string) {
   return `Pemahaman ${topicName} sudah cukup baik. Lanjutkan ke soal aplikasi dan tantangan.`;
 }
 
-export default function ResultPage() {
+function ResultContent() {
   const searchParams = useSearchParams();
   const attemptId = searchParams.get("attempt");
 
@@ -252,5 +252,21 @@ export default function ResultPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
+          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-8">
+            <p className="text-slate-300">Memuat hasil diagnostik...</p>
+          </div>
+        </main>
+      }
+    >
+      <ResultContent />
+    </Suspense>
   );
 }
