@@ -1,5 +1,6 @@
 "use client";
 
+import AiGapAnalysis from "../../components/AiGapAnalysis";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -220,6 +221,7 @@ export default function ResultPage() {
             adaptif pada tahap berikutnya.
           </p>
         </div>
+        <AiGapAnalysis attemptId={attemptId} />
 
         <div className="mt-8 flex flex-wrap gap-4">
           <Link

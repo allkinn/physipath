@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
@@ -132,6 +133,29 @@ export default function PracticeForm({
           <p className="mt-3 text-slate-300">
             Benar {result.correctCount} dari {result.totalQuestions} soal.
           </p>
+
+          <div className="mt-6 flex flex-wrap gap-4">
+            <Link
+              href="/dashboard"
+              className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+            >
+              Kembali ke Dashboard
+            </Link>
+
+            <Link
+              href="/practice"
+              className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
+            >
+              Latihan Lainnya
+            </Link>
+
+            <Link
+              href="/learn"
+              className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
+            >
+              Kembali ke Materi
+            </Link>
+          </div>
         </div>
       )}
 
