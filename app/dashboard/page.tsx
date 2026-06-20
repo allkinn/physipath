@@ -9,7 +9,6 @@ import {
   Brain,
   Clock3,
   Dumbbell,
-  LogOut,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -338,11 +337,6 @@ export default function DashboardPage() {
     );
   }, [recommendedModules, completedRecommendedModules]);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
@@ -379,15 +373,6 @@ export default function DashboardPage() {
                 : "Pantau hasil diagnostik, rekomendasi materi, latihan, dan progress belajar."}
             </p>
           </div>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-700 px-5 py-3 text-sm font-semibold text-slate-200 hover:border-red-400 hover:text-red-300"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
         </div>
 
         {!latestAttempt && (
@@ -481,24 +466,16 @@ export default function DashboardPage() {
               </Link>
 
               <Link
-                href="/practice"
-                className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
-              >
-                Latihan Adaptif
-              </Link>
-
-              <Link
                 href="/diagnostic"
                 className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
               >
                 Ulangi Tes
               </Link>
-
               <Link
-                href="/explore"
+                href="/practice"
                 className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
               >
-                Explore Challenge
+                Latihan Adaptif
               </Link>
             </div>
           </div>

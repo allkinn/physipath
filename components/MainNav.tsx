@@ -8,14 +8,16 @@ import {
   BookOpen,
   ChartNoAxesCombined,
   Dumbbell,
+  History,
   Lightbulb,
   LogOut,
   Menu,
+  User,
   X,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-const navItems = [
+const mainNavItems = [
   {
     label: "Dashboard",
     href: "/dashboard",
@@ -42,6 +44,21 @@ const navItems = [
     icon: Lightbulb,
   },
 ];
+
+const secondaryNavItems = [
+  {
+    label: "History",
+    href: "/history",
+    icon: History,
+  },
+  {
+    label: "Profile",
+    href: "/profile",
+    icon: User,
+  },
+];
+
+const navItems = [...mainNavItems, ...secondaryNavItems];
 
 const hiddenRoutes = ["/", "/login", "/register"];
 
@@ -95,7 +112,7 @@ export default function MainNav() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/90 px-6 py-4 text-white backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
               <Brain size={22} />
@@ -109,7 +126,7 @@ export default function MainNav() {
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-2 lg:flex">
+          <nav className="hidden items-center gap-2 xl:flex">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActivePath(pathname, item.href);
@@ -131,7 +148,7 @@ export default function MainNav() {
             })}
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden items-center gap-3 xl:flex">
             {isLoggedIn && (
               <button
                 type="button"
@@ -147,14 +164,14 @@ export default function MainNav() {
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="rounded-2xl border border-slate-800 bg-slate-900 p-3 text-slate-200 lg:hidden"
+            className="rounded-2xl border border-slate-800 bg-slate-900 p-3 text-slate-200 xl:hidden"
           >
             {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
         {isOpen && (
-          <div className="mx-auto mt-4 grid max-w-7xl gap-2 rounded-3xl border border-slate-800 bg-slate-900 p-3 lg:hidden">
+          <div className="mx-auto mt-4 grid max-w-7xl gap-2 rounded-3xl border border-slate-800 bg-slate-900 p-3 xl:hidden">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActivePath(pathname, item.href);
@@ -190,9 +207,9 @@ export default function MainNav() {
         )}
       </header>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800 bg-slate-950/95 px-3 py-2 text-white backdrop-blur-xl lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800 bg-slate-950/95 px-3 py-2 text-white backdrop-blur-xl xl:hidden">
         <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
-          {navItems.map((item) => {
+          {mainNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActivePath(pathname, item.href);
 
