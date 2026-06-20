@@ -12,3 +12,8 @@ body {
   margin: 0;
   background: #020617;
 }
+
+::selection {
+  background: rgba(34, 211, 238, 0.3);
+  color: white;
+}

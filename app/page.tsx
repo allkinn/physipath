@@ -29,6 +29,12 @@ export default function Home() {
             >
               Register
             </Link>
+            <Link
+              href="/about"
+              className="rounded-full border border-slate-700 px-5 py-2 text-sm text-slate-200 transition hover:border-cyan-400 hover:text-cyan-300"
+            >
+              About
+            </Link>
           </div>
         </nav>
 
