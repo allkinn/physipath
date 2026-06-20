@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  Info,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -42,11 +41,6 @@ const navItems = [
     href: "/explore",
     icon: Lightbulb,
   },
-  {
-    label: "About",
-    href: "/about",
-    icon: Info,
-},
 ];
 
 const hiddenRoutes = ["/", "/login", "/register"];

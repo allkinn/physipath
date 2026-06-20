@@ -1,44 +1,50 @@
 import Link from "next/link";
-import { Brain, ChartNoAxesCombined, GraduationCap, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  Brain,
+  BookOpen,
+  ChartNoAxesCombined,
+  Dumbbell,
+  Lightbulb,
+  Sparkles,
+} from "lucide-react";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      <section className="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-8">
+      <section className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8">
         <nav className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
-              <Brain size={22} />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400 text-slate-950">
+              <Brain size={24} />
             </div>
+
             <div>
               <h1 className="text-xl font-bold">PhysiPath</h1>
-              <p className="text-xs text-slate-400">AI Physics Diagnostic Platform</p>
+              <p className="text-xs text-slate-400">
+                AI Physics Diagnostic Learning Platform
+              </p>
             </div>
           </div>
 
           <div className="flex gap-3">
             <Link
               href="/login"
-              className="rounded-full border border-slate-700 px-5 py-2 text-sm text-slate-200 transition hover:border-cyan-400 hover:text-cyan-300"
+              className="rounded-full border border-slate-700 px-5 py-2 text-sm font-semibold text-slate-200 transition hover:border-cyan-400 hover:text-cyan-300"
             >
               Login
             </Link>
+
             <Link
               href="/register"
               className="rounded-full bg-cyan-400 px-5 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
             >
               Register
             </Link>
-            <Link
-              href="/about"
-              className="rounded-full border border-slate-700 px-5 py-2 text-sm text-slate-200 transition hover:border-cyan-400 hover:text-cyan-300"
-            >
-              About
-            </Link>
           </div>
         </nav>
 
-        <div className="grid flex-1 items-center gap-12 py-20 lg:grid-cols-2">
+        <div className="grid flex-1 items-center gap-12 py-16 lg:grid-cols-2">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-300">
               <Sparkles size={16} />
@@ -46,98 +52,149 @@ export default function Home() {
             </div>
 
             <h2 className="max-w-3xl text-5xl font-bold leading-tight tracking-tight md:text-6xl">
-              Deteksi gap akademik Fisika siswa secara personal.
+              Kenali kelemahan konsep Fisika, lalu belajar sesuai kebutuhanmu.
             </h2>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-              PhysiPath membantu siswa SMA mengetahui kelemahan konsep Fisika melalui
-              tes diagnostik, lalu memberikan rekomendasi belajar berdasarkan topik
-              yang belum dikuasai.
+              PhysiPath membantu siswa SMA memahami bagian Fisika yang belum
+              dikuasai melalui tes diagnostik, rekomendasi materi adaptif,
+              latihan soal, AI Tutor, progress tracking, dan tantangan soft skill.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
-                href="/diagnostic"
+                href="/register"
                 className="rounded-full bg-cyan-400 px-7 py-3 font-semibold text-slate-950 transition hover:bg-cyan-300"
               >
-                Mulai Tes Diagnostik
+                Register
               </Link>
 
               <Link
-                href="/dashboard"
+                href="/login"
                 className="rounded-full border border-slate-700 px-7 py-3 font-semibold text-slate-200 transition hover:border-cyan-400 hover:text-cyan-300"
               >
-                Lihat Dashboard
+                Login
               </Link>
             </div>
+
+            <p className="mt-5 text-sm text-slate-500">
+              Sudah punya akun? Login untuk melanjutkan belajar. Belum punya akun?
+              Register dulu untuk mulai tes diagnostik.
+            </p>
           </div>
 
           <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-2xl shadow-cyan-950/30">
             <div className="rounded-2xl bg-slate-950 p-6">
-              <p className="text-sm text-slate-400">Hasil Diagnostik Sementara</p>
+              <p className="text-sm text-slate-400">Alur Belajar PhysiPath</p>
 
-              <div className="mt-6 space-y-5">
-                <div>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span>GLB dan GLBB</span>
-                    <span className="text-red-300">Gap Berat</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-slate-800">
-                    <div className="h-3 w-[35%] rounded-full bg-red-400" />
-                  </div>
-                </div>
+              <div className="mt-6 space-y-4">
+                <FlowItem
+                  number="01"
+                  title="Tes Diagnostik"
+                  description="Siswa mengerjakan soal Fisika untuk memetakan kemampuan awal."
+                />
 
-                <div>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span>Hukum Newton</span>
-                    <span className="text-yellow-300">Perlu Penguatan</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-slate-800">
-                    <div className="h-3 w-[62%] rounded-full bg-yellow-300" />
-                  </div>
-                </div>
+                <FlowItem
+                  number="02"
+                  title="Analisis Gap"
+                  description="Sistem menghitung skor per topik dan menentukan bagian yang perlu diperkuat."
+                />
 
-                <div>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <span>Usaha dan Energi</span>
-                    <span className="text-emerald-300">Cukup Menguasai</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-slate-800">
-                    <div className="h-3 w-[82%] rounded-full bg-emerald-400" />
-                  </div>
-                </div>
+                <FlowItem
+                  number="03"
+                  title="Materi dan Latihan Adaptif"
+                  description="Siswa mendapat modul dan latihan sesuai hasil diagnostik."
+                />
+
+                <FlowItem
+                  number="04"
+                  title="AI Tutor dan Progress"
+                  description="AI membantu menjelaskan soal, sementara dashboard memantau perkembangan belajar."
+                />
               </div>
 
-              <div className="mt-8 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-                <p className="text-sm font-semibold text-cyan-300">Rekomendasi AI</p>
+              <div className="mt-6 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
+                <p className="text-sm font-semibold text-cyan-300">
+                  Fokus utama
+                </p>
                 <p className="mt-2 text-sm leading-6 text-slate-300">
-                  Fokus belajar pertama: GLB dan GLBB. Pelajari ulang konsep
-                  kecepatan, percepatan, grafik v-t, dan persamaan gerak.
+                  Platform ini dirancang agar siswa tidak hanya mengerjakan soal,
+                  tetapi juga memahami letak kelemahannya dan mendapat arahan
+                  belajar yang lebih personal.
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        <section className="grid gap-4 pb-10 md:grid-cols-3">
-          <FeatureCard
-            icon={<Brain size={24} />}
-            title="AI Diagnostic"
-            description="Menganalisis kelemahan konsep siswa berdasarkan hasil tes awal."
-          />
-          <FeatureCard
-            icon={<GraduationCap size={24} />}
-            title="Adaptive Learning"
-            description="Memberikan materi dan latihan sesuai tingkat pemahaman siswa."
-          />
-          <FeatureCard
-            icon={<ChartNoAxesCombined size={24} />}
-            title="Progress Tracking"
-            description="Menampilkan perkembangan belajar siswa per topik Fisika."
-          />
+        <section className="pb-16">
+          <div>
+            <p className="text-sm font-semibold text-cyan-300">Fitur Utama</p>
+            <h2 className="mt-2 text-3xl font-bold">
+              Satu platform untuk diagnosis, belajar, latihan, dan soft skill.
+            </h2>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <FeatureCard
+              icon={<Brain size={24} />}
+              title="Diagnostic Engine"
+              description="Mendeteksi gap akademik siswa berdasarkan hasil tes per topik Fisika."
+            />
+
+            <FeatureCard
+              icon={<BookOpen size={24} />}
+              title="Adaptive Learning"
+              description="Memberikan modul belajar sesuai tingkat pemahaman siswa."
+            />
+
+            <FeatureCard
+              icon={<Dumbbell size={24} />}
+              title="Adaptive Practice"
+              description="Menyediakan latihan soal yang sesuai dengan rekomendasi belajar."
+            />
+
+            <FeatureCard
+              icon={<Lightbulb size={24} />}
+              title="Explore Challenge"
+              description="Melatih problem solving, critical thinking, komunikasi, dan kreativitas."
+            />
+          </div>
         </section>
+
+        <footer className="border-t border-slate-800 py-6 text-sm text-slate-500">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p>© 2026 PhysiPath.</p>
+            <p>AI Diagnostic • Adaptive Learning • AI Tutor • Soft Skill Challenge</p>
+          </div>
+        </footer>
       </section>
     </main>
+  );
+}
+
+function FlowItem({
+  number,
+  title,
+  description,
+}: {
+  number: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+      <div className="flex items-start gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cyan-400/10 text-sm font-bold text-cyan-300">
+          {number}
+        </div>
+
+        <div>
+          <h3 className="font-bold">{title}</h3>
+          <p className="mt-1 leading-6 text-slate-400">{description}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -146,7 +203,7 @@ function FeatureCard({
   title,
   description,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
 }) {
@@ -155,6 +212,7 @@ function FeatureCard({
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300">
         {icon}
       </div>
+
       <h3 className="text-lg font-bold">{title}</h3>
       <p className="mt-2 leading-6 text-slate-400">{description}</p>
     </div>
