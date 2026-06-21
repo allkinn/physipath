@@ -95,7 +95,7 @@ export default async function PracticeDetailPage({
   const topic = getTopic(module.physics_topics);
 
   const { data: questionData, error: questionError } = await supabase
-    .from("practice_questions")
+    .from("safe_practice_questions")
     .select(`
       id,
       question_text,

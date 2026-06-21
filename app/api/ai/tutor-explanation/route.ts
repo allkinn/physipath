@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 
 type TopicRelation =
   | {
@@ -255,7 +256,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: questionData, error: questionError } = await supabase
+    const { data: questionData, error: questionError } = await supabaseAdmin
       .from("practice_questions")
       .select(`
         id,

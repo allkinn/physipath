@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 
 type SubmittedAnswer = {
   questionId: string;
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
 
     const questionIds = answers.map((item) => item.questionId);
 
-    const { data: questionsData, error: questionsError } = await supabase
+    const { data: questionsData, error: questionsError } = await supabaseAdmin
       .from("questions")
       .select("id, topic_id, correct_answer")
       .in("id", questionIds);

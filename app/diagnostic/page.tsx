@@ -41,7 +41,7 @@ function getTopicName(topic: TopicRelation) {
 
 export default async function DiagnosticPage() {
   const { data, error } = await supabase
-    .from("questions")
+    .from("safe_questions")
     .select(`
       id,
       code,
