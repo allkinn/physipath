@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock3,
   Dumbbell,
+  Lightbulb,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -85,6 +86,15 @@ type PracticeAttempt = {
   learning_modules: ModuleRelation;
 };
 
+type ExploreSubmission = {
+  id: string;
+  problem_solving_score: number | string;
+  critical_thinking_score: number | string;
+  communication_score: number | string;
+  creativity_score: number | string;
+  created_at: string;
+};
+
 function getTopic(topic: TopicRelation) {
   if (!topic) {
     return {
@@ -157,6 +167,9 @@ export default function DashboardPage() {
   const [topicScores, setTopicScores] = useState<TopicScore[]>([]);
   const [modules, setModules] = useState<LearningModule[]>([]);
   const [practiceAttempts, setPracticeAttempts] = useState<PracticeAttempt[]>(
+    []
+  );
+  const [exploreSubmissions, setExploreSubmissions] = useState<ExploreSubmission[]>(
     []
   );
   const [completedModuleIds, setCompletedModuleIds] = useState<string[]>([]);
@@ -295,12 +308,34 @@ export default function DashboardPage() {
         return;
       }
 
+      const { data: exploreData, error: exploreError } = await supabase
+        .from("explore_submissions")
+        .select(
+          `
+          id,
+          problem_solving_score,
+          critical_thinking_score,
+          communication_score,
+          creativity_score,
+          created_at
+        `
+        )
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+
+      if (exploreError) {
+        setMessage(exploreError.message);
+        setLoading(false);
+        return;
+      }
+
       setProfile(profileData as Profile | null);
       setLatestAttempt(attemptData as DiagnosticAttempt | null);
       setTopicScores(scoresData);
       setModules((moduleData ?? []) as LearningModule[]);
       setPracticeAttempts((practiceData ?? []) as PracticeAttempt[]);
       setCompletedModuleIds((progressData ?? []).map((item) => item.module_id));
+      setExploreSubmissions((exploreData ?? []) as ExploreSubmission[]);
       setLoading(false);
     }
 
@@ -382,6 +417,62 @@ export default function DashboardPage() {
     return practiceAttempts.slice(0, 5);
   }, [practiceAttempts]);
 
+  const softSkillSummary = useMemo(() => {
+    if (exploreSubmissions.length === 0) {
+      return {
+        problemSolving: 0,
+        criticalThinking: 0,
+        communication: 0,
+        creativity: 0,
+        overall: 0,
+        strongest: "-",
+        weakest: "-",
+      };
+    }
+
+    const average = (values: number[]) => {
+      return Math.round(
+        values.reduce((sum, value) => sum + value, 0) / values.length
+      );
+    };
+
+    const problemSolving = average(
+      exploreSubmissions.map((item) => toNumber(item.problem_solving_score))
+    );
+
+    const criticalThinking = average(
+      exploreSubmissions.map((item) => toNumber(item.critical_thinking_score))
+    );
+
+    const communication = average(
+      exploreSubmissions.map((item) => toNumber(item.communication_score))
+    );
+
+    const creativity = average(
+      exploreSubmissions.map((item) => toNumber(item.creativity_score))
+    );
+
+    const skills = [
+      { label: "Problem Solving", value: problemSolving },
+      { label: "Critical Thinking", value: criticalThinking },
+      { label: "Communication", value: communication },
+      { label: "Creativity", value: creativity },
+    ];
+
+    const strongest = [...skills].sort((a, b) => b.value - a.value)[0];
+    const weakest = [...skills].sort((a, b) => a.value - b.value)[0];
+
+    return {
+      problemSolving,
+      criticalThinking,
+      communication,
+      creativity,
+      overall: average([problemSolving, criticalThinking, communication, creativity]),
+      strongest: strongest.label,
+      weakest: weakest.label,
+    };
+  }, [exploreSubmissions]);
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
@@ -441,7 +532,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           <DashboardCard
             icon={<Brain />}
             title="Skor Diagnostik"
@@ -476,6 +567,19 @@ export default function DashboardPage() {
             title="Latihan Selesai"
             value={`${practiceAttempts.length}`}
             description={`Rata-rata latihan: ${averagePracticeScore}`}
+          />
+
+          <DashboardCard
+            icon={<Lightbulb />}
+            title="Soft Skill"
+            value={
+              exploreSubmissions.length > 0 ? `${softSkillSummary.overall}` : "-"
+            }
+            description={
+              exploreSubmissions.length > 0
+                ? `${exploreSubmissions.length} explore challenge selesai.`
+                : "Belum ada explore challenge."
+            }
           />
         </div>
 
@@ -572,6 +676,84 @@ export default function DashboardPage() {
               />
             </div>
           </div>
+        </div>
+
+        <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-900 p-6">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300">
+                  <Lightbulb />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Soft Skill Summary</h2>
+                  <p className="text-sm text-slate-400">
+                    Rata-rata skor dari Explore Challenge.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/explore"
+              className="rounded-full border border-slate-700 px-5 py-2 text-sm font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
+            >
+              Buka Explore
+            </Link>
+          </div>
+
+          {exploreSubmissions.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950 p-6">
+              <p className="leading-7 text-slate-400">
+                Belum ada data soft skill. Kerjakan Explore Challenge agar sistem dapat
+                menilai problem solving, critical thinking, communication, dan creativity.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <SoftSkillCard
+                  label="Problem Solving"
+                  value={softSkillSummary.problemSolving}
+                />
+                <SoftSkillCard
+                  label="Critical Thinking"
+                  value={softSkillSummary.criticalThinking}
+                />
+                <SoftSkillCard
+                  label="Communication"
+                  value={softSkillSummary.communication}
+                />
+                <SoftSkillCard
+                  label="Creativity"
+                  value={softSkillSummary.creativity}
+                />
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
+                  <p className="text-sm text-slate-500">Rata-rata</p>
+                  <p className="mt-2 text-3xl font-bold text-cyan-300">
+                    {softSkillSummary.overall}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
+                  <p className="text-sm text-slate-500">Skill Terkuat</p>
+                  <p className="mt-2 text-lg font-bold text-emerald-300">
+                    {softSkillSummary.strongest}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
+                  <p className="text-sm text-slate-500">Perlu Ditingkatkan</p>
+                  <p className="mt-2 text-lg font-bold text-yellow-300">
+                    {softSkillSummary.weakest}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
@@ -714,6 +896,30 @@ function DashboardCard({
       <p className="text-sm text-slate-400">{title}</p>
       <h2 className="mt-2 text-2xl font-bold">{value}</h2>
       <p className="mt-3 leading-6 text-slate-400">{description}</p>
+    </div>
+  );
+}
+
+function SoftSkillCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
+      <div className="flex items-center justify-between gap-4">
+        <p className="font-semibold">{label}</p>
+        <p className="text-2xl font-bold text-cyan-300">{value}</p>
+      </div>
+
+      <div className="mt-4 h-3 rounded-full bg-slate-800">
+        <div
+          className="h-3 rounded-full bg-cyan-400"
+          style={{ width: `${value}%` }}
+        />
+      </div>
     </div>
   );
 }

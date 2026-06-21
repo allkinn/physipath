@@ -7,6 +7,7 @@ import {
   Brain,
   Dumbbell,
   GraduationCap,
+  Lightbulb,
   Loader2,
   Mail,
   Save,
@@ -27,6 +28,12 @@ type Stats = {
   completedModuleCount: number;
   practiceCount: number;
   averagePracticeScore: number;
+  exploreCount: number;
+  problemSolvingAverage: number;
+  criticalThinkingAverage: number;
+  communicationAverage: number;
+  creativityAverage: number;
+  softSkillAverage: number;
 };
 
 export default function ProfilePage() {
@@ -45,7 +52,13 @@ export default function ProfilePage() {
     completedModuleCount: 0,
     practiceCount: 0,
     averagePracticeScore: 0,
-  });
+    exploreCount: 0,
+    problemSolvingAverage: 0,
+    criticalThinkingAverage: 0,
+    communicationAverage: 0,
+    creativityAverage: 0,
+    softSkillAverage: 0,
+    });
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -98,6 +111,18 @@ export default function ProfilePage() {
       .select("score")
       .eq("user_id", session.user.id);
 
+    const { data: exploreData } = await supabase
+    .from("explore_submissions")
+      .select(
+          `
+          problem_solving_score,
+          critical_thinking_score,
+          communication_score,
+          creativity_score
+      `
+      )
+
+  .eq("user_id", session.user.id);
     const practiceScores = practiceData ?? [];
     const averagePracticeScore =
       practiceScores.length > 0
@@ -113,11 +138,50 @@ export default function ProfilePage() {
     setSchool(profileData?.school ?? "");
     setRole(profileData?.role ?? "student");
 
+    const exploreScores = exploreData ?? [];
+
+    const average = (values: number[]) => {
+    if (values.length === 0) return 0;
+
+    return Math.round(
+        values.reduce((sum, value) => sum + value, 0) / values.length
+    );
+    };
+
+    const problemSolvingAverage = average(
+    exploreScores.map((item) => Number(item.problem_solving_score ?? 0))
+    );
+
+    const criticalThinkingAverage = average(
+    exploreScores.map((item) => Number(item.critical_thinking_score ?? 0))
+    );
+
+    const communicationAverage = average(
+    exploreScores.map((item) => Number(item.communication_score ?? 0))
+    );
+
+    const creativityAverage = average(
+    exploreScores.map((item) => Number(item.creativity_score ?? 0))
+    );
+
+    const softSkillAverage = average([
+    problemSolvingAverage,
+    criticalThinkingAverage,
+    communicationAverage,
+    creativityAverage,
+    ]);
+
     setStats({
-      diagnosticCount: diagnosticCount ?? 0,
-      completedModuleCount: completedModuleCount ?? 0,
-      practiceCount: practiceScores.length,
-      averagePracticeScore,
+        diagnosticCount: diagnosticCount ?? 0,
+        completedModuleCount: completedModuleCount ?? 0,
+        practiceCount: practiceScores.length,
+        averagePracticeScore,
+        exploreCount: exploreScores.length,
+        problemSolvingAverage,
+        criticalThinkingAverage,
+        communicationAverage,
+        creativityAverage,
+        softSkillAverage,
     });
 
     setLoading(false);
@@ -205,7 +269,7 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           <StatCard
             icon={<Brain />}
             label="Tes Diagnostik"
@@ -233,6 +297,62 @@ export default function ProfilePage() {
             value={stats.averagePracticeScore}
             description="Skor rata-rata practice"
           />
+
+          <StatCard
+            icon={<Lightbulb />}
+            label="Soft Skill"
+            value={stats.softSkillAverage}
+            description={`${stats.exploreCount} explore challenge selesai`}
+          />
+        </div>
+
+        <div className="mt-8 rounded-3xl border border-slate-800 bg-slate-900 p-6">
+            <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300">
+                <Lightbulb />
+                </div>
+                <div>
+                <h2 className="text-xl font-bold">Ringkasan Soft Skill</h2>
+                <p className="text-sm text-slate-400">
+                    Rata-rata penilaian dari Explore Challenge.
+                </p>
+                </div>
+            </div>
+
+            {stats.exploreCount === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950 p-6">
+                <p className="leading-7 text-slate-400">
+                    Belum ada data soft skill. Kerjakan Explore Challenge untuk mendapatkan
+                    ringkasan problem solving, critical thinking, communication, dan creativity.
+                </p>
+
+                <Link
+                    href="/explore"
+                    className="mt-5 inline-block rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"
+                >
+                    Mulai Explore
+                </Link>
+                </div>
+            ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <SoftSkillMiniCard
+                    label="Problem Solving"
+                    value={stats.problemSolvingAverage}
+                />
+                <SoftSkillMiniCard
+                    label="Critical Thinking"
+                    value={stats.criticalThinkingAverage}
+                />
+                <SoftSkillMiniCard
+                    label="Communication"
+                    value={stats.communicationAverage}
+                />
+                <SoftSkillMiniCard
+                    label="Creativity"
+                    value={stats.creativityAverage}
+                />
+                </div>
+            )}
         </div>
 
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_1.4fr]">
@@ -381,6 +501,30 @@ function InfoRow({
       <div>
         <p className="text-xs text-slate-500">{label}</p>
         <p className="mt-1 break-all font-semibold text-slate-200">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function SoftSkillMiniCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
+      <div className="flex items-center justify-between gap-4">
+        <p className="font-semibold">{label}</p>
+        <p className="text-2xl font-bold text-cyan-300">{value}</p>
+      </div>
+
+      <div className="mt-4 h-3 rounded-full bg-slate-800">
+        <div
+          className="h-3 rounded-full bg-cyan-400"
+          style={{ width: `${value}%` }}
+        />
       </div>
     </div>
   );
