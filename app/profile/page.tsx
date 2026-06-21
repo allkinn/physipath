@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
+  BookOpen,
   Brain,
   Dumbbell,
   GraduationCap,
@@ -16,13 +17,14 @@ import { supabase } from "../../lib/supabase";
 
 type Profile = {
   id: string;
-  full_name: string;
-  school: string;
-  role: string;
+  full_name: string | null;
+  school: string | null;
+  role: string | null;
 };
 
 type Stats = {
   diagnosticCount: number;
+  completedModuleCount: number;
   practiceCount: number;
   averagePracticeScore: number;
 };
@@ -40,6 +42,7 @@ export default function ProfilePage() {
 
   const [stats, setStats] = useState<Stats>({
     diagnosticCount: 0,
+    completedModuleCount: 0,
     practiceCount: 0,
     averagePracticeScore: 0,
   });
@@ -54,6 +57,7 @@ export default function ProfilePage() {
   async function loadProfile() {
     setLoading(true);
     setError("");
+    setMessage("");
 
     const {
       data: { session },
@@ -70,7 +74,7 @@ export default function ProfilePage() {
       .from("profiles")
       .select("id, full_name, school, role")
       .eq("id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (profileError) {
       setError(profileError.message);
@@ -83,6 +87,12 @@ export default function ProfilePage() {
       .select("id", { count: "exact", head: true })
       .eq("user_id", session.user.id);
 
+    const { count: completedModuleCount } = await supabase
+      .from("module_progress")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", session.user.id)
+      .eq("is_read", true);
+
     const { data: practiceData } = await supabase
       .from("practice_attempts")
       .select("score")
@@ -92,18 +102,20 @@ export default function ProfilePage() {
     const averagePracticeScore =
       practiceScores.length > 0
         ? Math.round(
-            practiceScores.reduce((sum, item) => sum + Number(item.score), 0) /
-              practiceScores.length
+            practiceScores.reduce((sum, item) => {
+              return sum + Number(item.score ?? 0);
+            }, 0) / practiceScores.length
           )
         : 0;
 
-    setProfile(profileData as Profile);
-    setFullName(profileData.full_name ?? "");
-    setSchool(profileData.school ?? "");
-    setRole(profileData.role ?? "student");
+    setProfile(profileData as Profile | null);
+    setFullName(profileData?.full_name ?? "");
+    setSchool(profileData?.school ?? "");
+    setRole(profileData?.role ?? "student");
 
     setStats({
       diagnosticCount: diagnosticCount ?? 0,
+      completedModuleCount: completedModuleCount ?? 0,
       practiceCount: practiceScores.length,
       averagePracticeScore,
     });
@@ -125,17 +137,20 @@ export default function ProfilePage() {
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
+    const { error: saveError } = await supabase.from("profiles").upsert(
+      {
+        id: session.user.id,
         full_name: fullName,
         school,
         role,
-      })
-      .eq("id", session.user.id);
+      },
+      {
+        onConflict: "id",
+      }
+    );
 
-    if (updateError) {
-      setError(updateError.message);
+    if (saveError) {
+      setError(saveError.message);
       setSaving(false);
       return;
     }
@@ -158,7 +173,7 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-white">
-      <section className="mx-auto max-w-5xl">
+      <section className="mx-auto max-w-6xl">
         <div className="rounded-3xl border border-slate-800 bg-slate-900 p-8">
           <div className="flex flex-wrap items-center justify-between gap-5">
             <div>
@@ -190,19 +205,28 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             icon={<Brain />}
             label="Tes Diagnostik"
             value={stats.diagnosticCount}
             description="Total tes yang dikerjakan"
           />
+
+          <StatCard
+            icon={<BookOpen />}
+            label="Modul Selesai"
+            value={stats.completedModuleCount}
+            description="Materi yang sudah ditandai selesai"
+          />
+
           <StatCard
             icon={<Dumbbell />}
             label="Latihan"
             value={stats.practiceCount}
             description="Total latihan selesai"
           />
+
           <StatCard
             icon={<GraduationCap />}
             label="Rata-rata Latihan"
@@ -223,11 +247,13 @@ export default function ProfilePage() {
 
             <div className="mt-5 space-y-4 text-sm">
               <InfoRow icon={<Mail size={18} />} label="Email" value={email} />
+
               <InfoRow
                 icon={<School size={18} />}
                 label="Sekolah"
                 value={profile?.school || "Belum diisi"}
               />
+
               <InfoRow
                 icon={<GraduationCap size={18} />}
                 label="Role"

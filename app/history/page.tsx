@@ -15,9 +15,7 @@ import { supabase } from "../../lib/supabase";
 
 type DiagnosticAttempt = {
   id: string;
-  score: number;
-  total_questions: number;
-  correct_count: number;
+  total_score: number | string;
   created_at: string;
 };
 
@@ -26,7 +24,7 @@ type TopicRelation = { name: string } | { name: string }[] | null;
 type TopicScore = {
   id: string;
   attempt_id: string;
-  score: number;
+  score: number | string;
   level: string;
   physics_topics: TopicRelation;
 };
@@ -44,7 +42,7 @@ type ModuleRelation =
 
 type PracticeAttempt = {
   id: string;
-  score: number;
+  score: number | string;
   correct_count: number;
   total_questions: number;
   created_at: string;
@@ -87,14 +85,22 @@ function getModuleTitle(module: ModuleRelation) {
 
 function getModuleTopic(module: ModuleRelation) {
   if (!module) return "Topik tidak diketahui";
-  if (Array.isArray(module)) return getTopicName(module[0]?.physics_topics ?? null);
+  if (Array.isArray(module)) {
+    return getTopicName(module[0]?.physics_topics ?? null);
+  }
   return getTopicName(module.physics_topics);
 }
 
 function getChallengeTitle(challenge: ChallengeRelation) {
   if (!challenge) return "Challenge tidak diketahui";
-  if (Array.isArray(challenge)) return challenge[0]?.title ?? "Challenge tidak diketahui";
+  if (Array.isArray(challenge)) {
+    return challenge[0]?.title ?? "Challenge tidak diketahui";
+  }
   return challenge.title;
+}
+
+function toNumber(value: number | string | null | undefined) {
+  return Number(value ?? 0);
 }
 
 export default function HistoryPage() {
@@ -124,7 +130,7 @@ export default function HistoryPage() {
 
     const { data: diagnosticData, error: diagnosticError } = await supabase
       .from("diagnostic_attempts")
-      .select("id, score, total_questions, correct_count, created_at")
+      .select("id, total_score, created_at")
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
 
@@ -271,12 +277,14 @@ export default function HistoryPage() {
             value={diagnostics.length}
             description="Jumlah tes yang sudah dikerjakan"
           />
+
           <SummaryCard
             icon={<Dumbbell />}
             title="Latihan"
             value={practices.length}
             description="Jumlah latihan adaptif selesai"
           />
+
           <SummaryCard
             icon={<Lightbulb />}
             title="Explore"
@@ -313,12 +321,13 @@ export default function HistoryPage() {
                         <p className="text-sm text-slate-500">
                           Tes #{diagnostics.length - index}
                         </p>
+
                         <h3 className="mt-1 text-xl font-bold">
-                          Skor {attempt.score}
+                          Skor {toNumber(attempt.total_score)}
                         </h3>
+
                         <p className="mt-2 text-sm text-slate-400">
-                          Benar {attempt.correct_count} dari{" "}
-                          {attempt.total_questions} soal
+                          Ringkasan detail jawaban bisa dilihat pada halaman hasil.
                         </p>
                       </div>
 
@@ -338,8 +347,9 @@ export default function HistoryPage() {
                             <p className="font-semibold">
                               {getTopicName(score.physics_topics)}
                             </p>
+
                             <p className="mt-1 text-sm text-slate-400">
-                              Skor {score.score} • {score.level}
+                              Skor {toNumber(score.score)} • {score.level}
                             </p>
                           </div>
                         ))}
@@ -383,6 +393,7 @@ export default function HistoryPage() {
                 >
                   <div className="mb-4 flex items-center gap-3 text-cyan-300">
                     <BookOpen size={20} />
+
                     <p className="text-sm font-semibold">
                       {getModuleTopic(practice.learning_modules)}
                     </p>
@@ -393,14 +404,16 @@ export default function HistoryPage() {
                   </h3>
 
                   <p className="mt-2 text-sm text-slate-400">
-                    Benar {practice.correct_count} dari {practice.total_questions} soal
+                    Benar {practice.correct_count} dari{" "}
+                    {practice.total_questions} soal
                   </p>
 
-                  <div className="mt-4 flex items-center justify-between">
+                  <div className="mt-4 flex items-center justify-between gap-4">
                     <p className="text-3xl font-bold text-cyan-300">
-                      {practice.score}
+                      {toNumber(practice.score)}
                     </p>
-                    <p className="text-sm text-slate-500">
+
+                    <p className="text-right text-sm text-slate-500">
                       {formatDate(practice.created_at)}
                     </p>
                   </div>
@@ -448,10 +461,25 @@ export default function HistoryPage() {
                     </p>
 
                     <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                      <ScoreBox label="Problem Solving" value={item.problem_solving_score} />
-                      <ScoreBox label="Critical Thinking" value={item.critical_thinking_score} />
-                      <ScoreBox label="Communication" value={item.communication_score} />
-                      <ScoreBox label="Creativity" value={item.creativity_score} />
+                      <ScoreBox
+                        label="Problem Solving"
+                        value={item.problem_solving_score}
+                      />
+
+                      <ScoreBox
+                        label="Critical Thinking"
+                        value={item.critical_thinking_score}
+                      />
+
+                      <ScoreBox
+                        label="Communication"
+                        value={item.communication_score}
+                      />
+
+                      <ScoreBox
+                        label="Creativity"
+                        value={item.creativity_score}
+                      />
                     </div>
 
                     <div className="mt-5 rounded-2xl bg-cyan-400/10 p-4">
@@ -487,6 +515,7 @@ function SummaryCard({
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300">
         {icon}
       </div>
+
       <p className="text-sm text-slate-400">{title}</p>
       <p className="mt-2 text-4xl font-bold">{value}</p>
       <p className="mt-2 text-sm text-slate-500">{description}</p>
@@ -508,10 +537,13 @@ function EmptyState({
   return (
     <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-950 p-8 text-center">
       <BarChart3 className="mx-auto text-slate-500" size={36} />
+
       <h3 className="mt-4 text-xl font-bold">{title}</h3>
+
       <p className="mx-auto mt-2 max-w-xl leading-7 text-slate-400">
         {description}
       </p>
+
       <Link
         href={href}
         className="mt-5 inline-flex rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-300"

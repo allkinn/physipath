@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
+import MarkModuleCompleteButton from "../../../components/MarkModuleCompleteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +132,10 @@ export default async function ModuleDetailPage({
           </div>
         </div>
 
+        <div className="mt-8">
+          <MarkModuleCompleteButton moduleId={module.id} />
+        </div>
+
         <div className="mt-8 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-6">
           <h2 className="text-xl font-bold text-cyan-300">Latihan Adaptif</h2>
           <p className="mt-3 leading-7 text-slate-300">
@@ -144,13 +149,6 @@ export default async function ModuleDetailPage({
           >
             Mulai Latihan Modul Ini
           </Link>
-        </div>
-        <div className="mt-8 rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-6">
-          <h2 className="text-xl font-bold text-cyan-300">Langkah Berikutnya</h2>
-          <p className="mt-3 leading-7 text-slate-300">
-            Setelah membaca modul ini, lanjutkan dengan latihan soal pada topik yang
-            sama. Fitur latihan adaptif akan dibuat pada tahap berikutnya.
-          </p>
         </div>
       </article>
     </main>

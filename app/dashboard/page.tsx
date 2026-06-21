@@ -7,6 +7,7 @@ import {
   BarChart3,
   BookOpen,
   Brain,
+  CheckCircle2,
   Clock3,
   Dumbbell,
   Target,
@@ -158,6 +159,8 @@ export default function DashboardPage() {
   const [practiceAttempts, setPracticeAttempts] = useState<PracticeAttempt[]>(
     []
   );
+  const [completedModuleIds, setCompletedModuleIds] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -206,7 +209,8 @@ export default function DashboardPage() {
       if (attemptData) {
         const { data, error } = await supabase
           .from("topic_scores")
-          .select(`
+          .select(
+            `
             id,
             topic_id,
             score,
@@ -216,7 +220,8 @@ export default function DashboardPage() {
               description,
               order_index
             )
-          `)
+          `
+          )
           .eq("attempt_id", attemptData.id);
 
         if (error) {
@@ -230,14 +235,16 @@ export default function DashboardPage() {
 
       const { data: moduleData, error: moduleError } = await supabase
         .from("learning_modules")
-        .select(`
+        .select(
+          `
           id,
           topic_id,
           slug,
           title,
           target_level,
           difficulty_label
-        `);
+        `
+        );
 
       if (moduleError) {
         setMessage(moduleError.message);
@@ -247,7 +254,8 @@ export default function DashboardPage() {
 
       const { data: practiceData, error: practiceError } = await supabase
         .from("practice_attempts")
-        .select(`
+        .select(
+          `
           id,
           module_id,
           score,
@@ -264,7 +272,8 @@ export default function DashboardPage() {
               order_index
             )
           )
-        `)
+        `
+        )
         .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
@@ -274,11 +283,24 @@ export default function DashboardPage() {
         return;
       }
 
+      const { data: progressData, error: progressError } = await supabase
+        .from("module_progress")
+        .select("module_id")
+        .eq("user_id", session.user.id)
+        .eq("is_read", true);
+
+      if (progressError) {
+        setMessage(progressError.message);
+        setLoading(false);
+        return;
+      }
+
       setProfile(profileData as Profile | null);
       setLatestAttempt(attemptData as DiagnosticAttempt | null);
       setTopicScores(scoresData);
       setModules((moduleData ?? []) as LearningModule[]);
       setPracticeAttempts((practiceData ?? []) as PracticeAttempt[]);
+      setCompletedModuleIds((progressData ?? []).map((item) => item.module_id));
       setLoading(false);
     }
 
@@ -287,7 +309,10 @@ export default function DashboardPage() {
 
   const sortedTopicScores = useMemo(() => {
     return [...topicScores].sort((a, b) => {
-      return getTopic(a.physics_topics).order_index - getTopic(b.physics_topics).order_index;
+      return (
+        getTopic(a.physics_topics).order_index -
+        getTopic(b.physics_topics).order_index
+      );
     });
   }, [topicScores]);
 
@@ -309,7 +334,15 @@ export default function DashboardPage() {
     );
   }, [topicScores, modules]);
 
-  const completedRecommendedModules = useMemo(() => {
+  const completedMaterialModules = useMemo(() => {
+    const recommendedIds = new Set(recommendedModules.map((module) => module.id));
+
+    return new Set(
+      completedModuleIds.filter((moduleId) => recommendedIds.has(moduleId))
+    );
+  }, [completedModuleIds, recommendedModules]);
+
+  const completedPracticeModules = useMemo(() => {
     const recommendedIds = new Set(recommendedModules.map((module) => module.id));
 
     return new Set(
@@ -329,13 +362,25 @@ export default function DashboardPage() {
     return Number((total / practiceAttempts.length).toFixed(2));
   }, [practiceAttempts]);
 
-  const learningProgress = useMemo(() => {
+  const materialProgress = useMemo(() => {
     if (recommendedModules.length === 0) return 0;
 
     return Math.round(
-      (completedRecommendedModules.size / recommendedModules.length) * 100
+      (completedMaterialModules.size / recommendedModules.length) * 100
     );
-  }, [recommendedModules, completedRecommendedModules]);
+  }, [recommendedModules, completedMaterialModules]);
+
+  const practiceProgress = useMemo(() => {
+    if (recommendedModules.length === 0) return 0;
+
+    return Math.round(
+      (completedPracticeModules.size / recommendedModules.length) * 100
+    );
+  }, [recommendedModules, completedPracticeModules]);
+
+  const latestPracticeAttempts = useMemo(() => {
+    return practiceAttempts.slice(0, 5);
+  }, [practiceAttempts]);
 
   if (loading) {
     return (
@@ -363,7 +408,9 @@ export default function DashboardPage() {
       <section className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-start justify-between gap-5">
           <div>
-            <p className="text-sm font-semibold text-cyan-300">Dashboard Siswa</p>
+            <p className="text-sm font-semibold text-cyan-300">
+              Dashboard Siswa
+            </p>
             <h1 className="mt-2 text-3xl font-bold">
               Halo, {profile?.full_name ?? "Siswa"}
             </h1>
@@ -419,9 +466,9 @@ export default function DashboardPage() {
 
           <DashboardCard
             icon={<BookOpen />}
-            title="Modul Direkomendasikan"
-            value={`${recommendedModules.length}`}
-            description="Modul dipilih dari hasil gap terbaru."
+            title="Materi Selesai"
+            value={`${completedMaterialModules.size}/${recommendedModules.length}`}
+            description={`${materialProgress}% dari modul rekomendasi sudah ditandai selesai.`}
           />
 
           <DashboardCard
@@ -438,22 +485,27 @@ export default function DashboardPage() {
               <div>
                 <h2 className="text-xl font-bold">Progress Belajar</h2>
                 <p className="mt-2 text-slate-400">
-                  Dihitung dari modul rekomendasi yang sudah dikerjakan latihannya.
-                </p>
-              </div>
-
-              <div className="text-right">
-                <p className="text-4xl font-bold">{learningProgress}%</p>
-                <p className="text-sm text-cyan-300">
-                  {completedRecommendedModules.size}/{recommendedModules.length} modul
+                  Progress dipisahkan antara materi yang sudah dibaca dan latihan
+                  yang sudah dikerjakan.
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 h-4 rounded-full bg-slate-800">
-              <div
-                className="h-4 rounded-full bg-cyan-400"
-                style={{ width: `${learningProgress}%` }}
+            <div className="mt-6 space-y-6">
+              <ProgressRow
+                icon={<BookOpen size={20} />}
+                title="Progress Materi"
+                description="Dihitung dari modul rekomendasi yang sudah ditandai Completed."
+                value={materialProgress}
+                count={`${completedMaterialModules.size}/${recommendedModules.length} modul`}
+              />
+
+              <ProgressRow
+                icon={<Dumbbell size={20} />}
+                title="Progress Latihan"
+                description="Dihitung dari modul rekomendasi yang sudah dikerjakan latihannya."
+                value={practiceProgress}
+                count={`${completedPracticeModules.size}/${recommendedModules.length} modul`}
               />
             </div>
 
@@ -471,6 +523,7 @@ export default function DashboardPage() {
               >
                 Ulangi Tes
               </Link>
+
               <Link
                 href="/practice"
                 className="rounded-full border border-slate-700 px-6 py-3 font-semibold text-slate-200 hover:border-cyan-400 hover:text-cyan-300"
@@ -503,14 +556,19 @@ export default function DashboardPage() {
                 active={recommendedModules.length > 0}
               />
               <RoadmapItem
-                title="3. Latihan Adaptif"
-                status={practiceAttempts.length > 0 ? "Berjalan" : "Belum"}
-                active={practiceAttempts.length > 0}
+                title="3. Modul Dibaca"
+                status={`${completedMaterialModules.size}/${recommendedModules.length}`}
+                active={completedMaterialModules.size > 0}
               />
               <RoadmapItem
-                title="4. Progress Tracking"
-                status={`${learningProgress}%`}
-                active={learningProgress > 0}
+                title="4. Latihan Adaptif"
+                status={`${completedPracticeModules.size}/${recommendedModules.length}`}
+                active={completedPracticeModules.size > 0}
+              />
+              <RoadmapItem
+                title="5. Progress Tracking"
+                status={`${materialProgress}%`}
+                active={materialProgress > 0 || practiceProgress > 0}
               />
             </div>
           </div>
@@ -597,7 +655,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {practiceAttempts.map((attempt) => {
+                {latestPracticeAttempts.map((attempt) => {
                   const module = getModule(attempt.learning_modules);
                   const topic = getTopic(module.physics_topics);
 
@@ -656,6 +714,48 @@ function DashboardCard({
       <p className="text-sm text-slate-400">{title}</p>
       <h2 className="mt-2 text-2xl font-bold">{value}</h2>
       <p className="mt-3 leading-6 text-slate-400">{description}</p>
+    </div>
+  );
+}
+
+function ProgressRow({
+  icon,
+  title,
+  description,
+  value,
+  count,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  value: number;
+  count: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="mt-1 text-cyan-300">{icon}</div>
+          <div>
+            <h3 className="font-bold">{title}</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-400">
+              {description}
+            </p>
+          </div>
+        </div>
+
+        <div className="text-right">
+          <p className="text-3xl font-bold text-cyan-300">{value}%</p>
+          <p className="mt-1 text-sm text-slate-500">{count}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 h-3 rounded-full bg-slate-800">
+        <div
+          className="h-3 rounded-full bg-cyan-400"
+          style={{ width: `${value}%` }}
+        />
+      </div>
     </div>
   );
 }
